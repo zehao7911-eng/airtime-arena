@@ -17,6 +17,7 @@ function clean(value){
 let local;
 try{local=JSON.parse(localStorage.getItem(key));}catch{}
 let state=clean(local), view, support={}, flight=null, holding=false, active=false, mute=false, audio, impact=0, pointer=null;
+let introStarted=null, scoreUntil=0;
 const host=new BeaconHost(window,{
   status(value){support=value;rewardText();},
   reward(key){
@@ -66,7 +67,7 @@ function sync(){
   el('score').textContent=state.results.reduce((a,b)=>a+b,0)+' / 9 pts';
   el('target').textContent=target()===1?'Single somersault':'Double somersault';
   el('line').style.left='83.33%';
-  el('action').disabled=done;
+  el('action').disabled=done||introStarted!==null;
   el('action').textContent=flight?(holding?'Release to extend':'Hold to tuck'):'Jump ↑';
   el('result').hidden=!done;
   el('medal').textContent=['Keep practicing','Bronze medal','Silver medal','Gold medal'][medal]+(state.profile.confetti&&medal?' ✦ 🎉 ✦':'');
@@ -86,13 +87,18 @@ function select(index){
   if(!cups[index]||!state.profile.medals.slice(0,index).every(Boolean))return;
   host.end();active=false;flight=null;holding=false;pointer=null;impact=0;
   state.cup=index;state.results=[];
+  view.setScore(null);
+  openIntro();
   el('feedback').textContent='Ready on the deck';
   sync();save();
 }
 function jump(){
-  if(flight||state.results.length===3)return;
+  if(flight||state.results.length===3||introStarted!==null)return;
   if(!active){active=true;host.start();}
   flight={elapsed:0,angle:0,tuck:0};
+  scoreUntil=0;
+  el('judges').hidden=true;
+  view.setScore(null);
   chime(330);
   el('feedback').textContent='Hold the button to tuck';
   sync();
@@ -105,6 +111,10 @@ function land(){
   const score=points(flight.angle,target());
   flight=null;holding=false;impact=1;
   state.results.push(score);
+  view.setScore(score);
+  el('landing-score').textContent=score+' / 3';
+  el('judges').hidden=false;
+  scoreUntil=performance.now()+1700;
   el('feedback').textContent=['Off balance','Landing saved · +1','Clean landing · +2','Perfect landing · +3'][score];
   chime(score?475+score*87:165);
   if(state.results.length===3){
@@ -116,6 +126,19 @@ function land(){
 try{view=new Arena(document.querySelector('canvas'));}catch{
   el('feedback').textContent='This arena needs a browser with WebGL.';
   el('action').disabled=true;
+}
+function openIntro(){
+  introStarted=performance.now();
+  el('broadcast').hidden=false;
+  el('shot').textContent='Arena overview';
+  el('judges').hidden=true;
+  scoreUntil=0;
+}
+function closeIntro(){
+  introStarted=null;
+  el('broadcast').hidden=true;
+  el('feedback').textContent='Hold to jump and tuck';
+  sync();
 }
 if(view){
   const action=el('action');
@@ -139,16 +162,24 @@ if(view){
   addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
   el('next').onclick=()=>select(state.cup+1);
   el('replay').onclick=()=>select(state.cup);
+  el('skip').onclick=closeIntro;
   el('sound').onclick=()=>{
     mute=!mute;el('sound').textContent=mute?'Sound off':'♪ Sound';
     el('sound').setAttribute('aria-pressed',String(!mute));
   };
   el('feedback').textContent=state.results.length===3?'Routine saved':state.results.length?'Ready for the next jump':'Hold to jump and tuck';
+  if(!state.results.length)openIntro();
   sync();host.poll();
   let last=performance.now();
   function frame(now){
     const dt=Math.min(.04,(now-last)/1000);
     last=now;
+    let intro=introStarted===null?null:(now-introStarted)/1000;
+    if(intro!==null){
+      if(intro>=4.4){closeIntro();intro=null;}
+      else el('shot').textContent=intro<1.45?'Arena overview':intro<2.9?'Official judges':'Athlete ready';
+    }
+    if(scoreUntil&&now>=scoreUntil){scoreUntil=0;el('judges').hidden=true;}
     if(flight&&!document.hidden){
       flight.elapsed+=dt;
       if(holding)flight.angle+=speed*dt;
@@ -160,7 +191,7 @@ if(view){
     el('turns').textContent=(ratio*target()).toFixed(2)+' / '+target()+' turns';
     impact=Math.max(0,impact-dt*4);
     const height=flight?Math.sin(Math.PI*flight.elapsed/cup().time)*cup().height:0;
-    view.draw(cup(),height,flight?.angle??0,flight?.tuck??0,!!stars(state.results),impact,now/1000,state.profile.gold);
+    view.draw(cup(),height,flight?.angle??0,flight?.tuck??0,stars(state.results),impact,now/1000,state.profile.gold,intro);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

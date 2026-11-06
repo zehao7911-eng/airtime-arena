@@ -24,6 +24,7 @@ export class Arena {
     this.materials=new Map();
     this.makeVenue();
     this.makeAthlete();
+    this.makeBroadcast();
     this.resize();
     new ResizeObserver(()=>this.resize()).observe(canvas);
   }
@@ -174,32 +175,107 @@ export class Arena {
       return {arm,elbow,leg,knee,side};
     });
   }
+  makeBroadcast(){
+    const z=-3.75;
+    this.box(5.9,.18,1.5,0x297581,0,.18,z);
+    this.box(5.5,.74,.78,0x183b56,0,.67,z+.18);
+    this.box(5.65,.085,.89,0x91c6c1,0,1.08,z+.18);
+    this.label('OFFICIAL JUDGES PANEL',4.55,.33,0,.77,z+.585);
+    this.cards=[];
+    for(const [i,x] of [-1.69,0,1.69].entries()){
+      const skin=[0xe0ac86,0xad775b,0xe6bc95][i];
+      this.box(.48,.56,.34,0x243d53,x,1.16,z-.2);
+      this.box(.33,.33,.34,skin,x,1.60,z-.18);
+      this.box(.36,.105,.35,[0x43363b,0x302d39,0x754d40][i],x,1.78,z-.18);
+      this.box(.14,.19,.025,0xe6e3cb,x,1.27,z);
+      this.box(.053,.15,.031,0x5fc2c3,x,1.27,z+.02);
+      for(const dx of [-.08,.08])this.box(.045,.043,.024,0x28333d,x+dx,1.63,z+.004);
+      this.box(.24,.06,.17,0x67818c,x-.36,1.135,z+.47);
+      const mic=this.box(.032,.23,.032,0x253d4f,x-.36,1.27,z+.46);
+      mic.rotation.x=-.29;
+      this.box(.08,.08,.08,0x354d5a,x-.36,1.38,z+.425);
+      const surface=document.createElement('canvas');
+      surface.width=128;surface.height=96;
+      const texture=new T.CanvasTexture(surface);
+      texture.encoding=T.sRGBEncoding;
+      const mesh=new T.Mesh(new T.PlaneGeometry(.46,.34),new T.MeshBasicMaterial({map:texture}));
+      mesh.position.set(x+.32,1.14,z+.47);
+      mesh.rotation.x=-.35;
+      this.scene.add(mesh);
+      this.cards.push({surface,texture,mesh});
+    }
+    this.setScore(null);
+    this.podium=this.group(this.scene,0,0,0);
+    this.box(1.50,.44,1.24,0xca9041,0,1.18,0,this.podium);
+    this.box(1.57,.06,1.31,0xffd684,0,1.43,0,this.podium);
+    this.box(1.00,.25,1.05,0xa6c3c6,-1.28,1.09,0,this.podium);
+    this.box(1.00,.16,1.05,0xac7962,1.28,1.045,0,this.podium);
+    this.medallion=this.group(this.body,0,.22,.24);
+    this.box(.13,.22,.02,0x469ea8,0,.065,0,this.medallion);
+    this.box(.145,.135,.045,0xf1c15d,0,-.047,.014,this.medallion);
+    this.podium.visible=false;
+    this.medallion.visible=false;
+  }
+  setScore(score){
+    this.lastScore=score;
+    for(const {surface,texture,mesh} of this.cards){
+      const ctx=surface.getContext('2d');
+      ctx.fillStyle='#132a3d';ctx.fillRect(0,0,128,96);
+      ctx.strokeStyle='#7dcac1';ctx.lineWidth=5;ctx.strokeRect(3,3,122,90);
+      ctx.fillStyle='#ffdc8b';ctx.font='bold 53px Arial';ctx.textAlign='center';
+      ctx.fillText(score===null?'–':String(score),64,66);
+      texture.needsUpdate=true;
+      mesh.position.y=score===null?1.14:1.45;
+    }
+  }
   resize(){
     const w=this.canvas.clientWidth,h=this.canvas.clientHeight;
     if(!w||!h)return;
     this.camera.aspect=w/h;this.camera.updateProjectionMatrix();
     this.renderer.setSize(w,h,false);
   }
-  draw(cup,height,angle,tuck,celebrate,impact,t,gold){
+  draw(cup,height,angle,tuck,medal,impact,t,gold,intro){
+    const celebrate=medal>0;
+    const walking=intro!==null&&intro>=2.9;
+    const entrance=walking?Math.max(0,1-(intro-2.9)/1.18):0;
+    const stride=Math.sin(t*17)*entrance*.36;
+    this.podium.visible=celebrate;
+    this.medallion.visible=celebrate;
+    this.medallion.children[1].material=this.mat([0xf1c15d,0xb67b62,0xc5dde1,0xf1c15d][medal]);
     this.suit.material=this.mat(gold?0xd7a642:0xe06053);
     this.edge.color.set(cup.color);
     this.scene.background.set(cup.color).multiplyScalar(.26);
-    this.athlete.position.y=2.04+height-impact*.10;
-    this.body.rotation.x=-angle;
+    this.athlete.position.y=2.04+height-impact*.10+(celebrate?.47:0)+Math.abs(stride)*.12;
+    this.athlete.position.z=entrance*1.05;
+    this.body.rotation.x=-angle+(this.lastScore===0?impact*.28:0);
     for(const {arm,elbow,leg,knee,side} of this.limbs){
       arm.rotation.z=side*(celebrate?2.32:.19+tuck*.13);
-      arm.rotation.x=-tuck*.83;
+      arm.rotation.x=-tuck*.83+stride*side;
       elbow.rotation.x=-tuck*.9;
-      leg.rotation.x=-tuck*1.38;
+      leg.rotation.x=-tuck*1.38-stride*side;
       knee.rotation.x=tuck*1.78;
     }
     this.matBed.position.y=.93-impact*.1;
     this.shadow.material.opacity=.26/(1+height*.72);
     this.shadow.scale.setScalar(1+height*.19);
+    this.shadow.position.z=this.athlete.position.z;
     this.landingRing.visible=impact>0;
     this.landingRing.scale.setScalar(1+(1-impact)*1.2);
     this.landingRing.material.opacity=impact*.7;
-    const zoom=1+Math.min(height,3)*.019;
+    if(intro!==null&&intro<1.45){
+      this.camera.position.set(7.9-intro*1.15,5.8,13.5);
+      this.camera.lookAt(0,2.7,-.35);
+    }else if(intro!==null&&intro<2.9){
+      this.camera.position.set(2.9,3.1,2.2);
+      this.camera.lookAt(0,1.32,-3.75);
+    }else if(intro!==null||celebrate){
+      this.camera.position.set(2.8,3.45,7.8);
+      this.camera.lookAt(0,2.37,0);
+    }else{
+      this.camera.position.set(5.8,5.15+height*.14,12.5);
+      this.camera.lookAt(0,3.4+height*.12,0);
+    }
+    const zoom=intro===null&&!celebrate?1+Math.min(height,3)*.019:1;
     if(Math.abs(this.camera.zoom-zoom)>.003){this.camera.zoom=zoom;this.camera.updateProjectionMatrix();}
     this.renderer.render(this.scene,this.camera);
   }

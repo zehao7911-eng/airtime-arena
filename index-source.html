@@ -3,8 +3,10 @@
 <section class="arena" aria-label="3D trampoline arena"><canvas></canvas>
 <div class="top"><div><small id="cup"></small><strong id="event"></strong></div><div id="score"></div></div>
 <div id="feedback" role="status"></div>
-<div id="result" hidden><small>ROUTINE COMPLETE</small><h2 id="medal"></h2><p id="summary"></p><button id="next">Next arena →</button><button id="replay">Try again</button></div>
+<div id="broadcast" hidden><span>● LIVE</span><strong id="shot"></strong><button id="skip">Skip intro</button></div>
+<div id="judges" hidden aria-live="polite"><small>JUDGES’ SCORE</small><strong id="landing-score"></strong></div>
 </section>
+<div id="result" hidden><small>ROUTINE COMPLETE</small><h2 id="medal"></h2><p id="summary"></p><button id="next">Next arena →</button><button id="replay">Try again</button></div>
 <section class="controls"><div class="goal"><span id="target"></span><strong id="turns"></strong></div><div class="track"><i id="spin"></i><b id="line"></b></div><button id="action">Jump ↑</button></section>
 <nav id="cups" aria-label="Arena selection"></nav><p id="hint">Jump, then hold to tuck. Release when the turn meter reaches the line.</p><p id="rewards" hidden></p>
 </main><script src="vendor/three.min.js"></script><script type="module" src="app.mjs"></script></body></html>

@@ -22,13 +22,24 @@ nav{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}nav 
 #hint,#rewards{font-size:11px;color:#c1d5e5;margin-top:7px}
 #result{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:86%;padding:17px;text-align:center;background:#152b43f5;border:1px solid #75b4bc;border-radius:16px;box-shadow:0 14px 40px #0b172c}#medal{font-size:26px;color:#ffdc89}#summary{margin:8px 0 12px;font-size:13px}
 [hidden]{display:none!important}
+#broadcast{position:absolute;left:12px;right:12px;bottom:48px;display:grid;grid-template-columns:1fr auto;align-items:center;padding:9px 10px;background:#142940ed;border-left:3px solid #f8cb77;border-radius:5px;gap:4px 8px}
+#broadcast span{font-size:9px;font-weight:900;letter-spacing:.2em;color:#ff8a80}
+#broadcast strong{grid-column:1;font-size:14px}
+#skip{grid-column:2;grid-row:1/3;font-size:11px}
+#judges{position:absolute;top:76px;right:12px;display:grid;justify-items:center;gap:2px;padding:7px 12px;background:#122941eb;border:1px solid #8dd9cf;border-radius:9px;pointer-events:none}
+#landing-score{color:#ffda87;font-size:25px;line-height:1.05}
+#result{position:static;transform:none;width:100%;margin-top:9px;padding:11px}
+main:has(#result:not([hidden])) .controls{display:none}
+#result p{margin:4px 0 8px}
 </style></head>
 <body><main><header><div><small>WORLD TRAMPOLINE SERIES</small><h1>Airtime <em>Arena</em></h1></div><button id="sound" aria-pressed="true">♪ Sound</button></header>
 <section class="arena" aria-label="3D trampoline arena"><canvas></canvas>
 <div class="top"><div><small id="cup"></small><strong id="event"></strong></div><div id="score"></div></div>
 <div id="feedback" role="status"></div>
-<div id="result" hidden><small>ROUTINE COMPLETE</small><h2 id="medal"></h2><p id="summary"></p><button id="next">Next arena →</button><button id="replay">Try again</button></div>
+<div id="broadcast" hidden><span>● LIVE</span><strong id="shot"></strong><button id="skip">Skip intro</button></div>
+<div id="judges" hidden aria-live="polite"><small>JUDGES’ SCORE</small><strong id="landing-score"></strong></div>
 </section>
+<div id="result" hidden><small>ROUTINE COMPLETE</small><h2 id="medal"></h2><p id="summary"></p><button id="next">Next arena →</button><button id="replay">Try again</button></div>
 <section class="controls"><div class="goal"><span id="target"></span><strong id="turns"></strong></div><div class="track"><i id="spin"></i><b id="line"></b></div><button id="action">Jump ↑</button></section>
 <nav id="cups" aria-label="Arena selection"></nav><p id="hint">Jump, then hold to tuck. Release when the turn meter reaches the line.</p><p id="rewards" hidden></p>
 </main><script>/**
@@ -79,6 +90,7 @@ class Arena {
     this.materials=new Map();
     this.makeVenue();
     this.makeAthlete();
+    this.makeBroadcast();
     this.resize();
     new ResizeObserver(()=>this.resize()).observe(canvas);
   }
@@ -229,32 +241,107 @@ class Arena {
       return {arm,elbow,leg,knee,side};
     });
   }
+  makeBroadcast(){
+    const z=-3.75;
+    this.box(5.9,.18,1.5,0x297581,0,.18,z);
+    this.box(5.5,.74,.78,0x183b56,0,.67,z+.18);
+    this.box(5.65,.085,.89,0x91c6c1,0,1.08,z+.18);
+    this.label('OFFICIAL JUDGES PANEL',4.55,.33,0,.77,z+.585);
+    this.cards=[];
+    for(const [i,x] of [-1.69,0,1.69].entries()){
+      const skin=[0xe0ac86,0xad775b,0xe6bc95][i];
+      this.box(.48,.56,.34,0x243d53,x,1.16,z-.2);
+      this.box(.33,.33,.34,skin,x,1.60,z-.18);
+      this.box(.36,.105,.35,[0x43363b,0x302d39,0x754d40][i],x,1.78,z-.18);
+      this.box(.14,.19,.025,0xe6e3cb,x,1.27,z);
+      this.box(.053,.15,.031,0x5fc2c3,x,1.27,z+.02);
+      for(const dx of [-.08,.08])this.box(.045,.043,.024,0x28333d,x+dx,1.63,z+.004);
+      this.box(.24,.06,.17,0x67818c,x-.36,1.135,z+.47);
+      const mic=this.box(.032,.23,.032,0x253d4f,x-.36,1.27,z+.46);
+      mic.rotation.x=-.29;
+      this.box(.08,.08,.08,0x354d5a,x-.36,1.38,z+.425);
+      const surface=document.createElement('canvas');
+      surface.width=128;surface.height=96;
+      const texture=new T.CanvasTexture(surface);
+      texture.encoding=T.sRGBEncoding;
+      const mesh=new T.Mesh(new T.PlaneGeometry(.46,.34),new T.MeshBasicMaterial({map:texture}));
+      mesh.position.set(x+.32,1.14,z+.47);
+      mesh.rotation.x=-.35;
+      this.scene.add(mesh);
+      this.cards.push({surface,texture,mesh});
+    }
+    this.setScore(null);
+    this.podium=this.group(this.scene,0,0,0);
+    this.box(1.50,.44,1.24,0xca9041,0,1.18,0,this.podium);
+    this.box(1.57,.06,1.31,0xffd684,0,1.43,0,this.podium);
+    this.box(1.00,.25,1.05,0xa6c3c6,-1.28,1.09,0,this.podium);
+    this.box(1.00,.16,1.05,0xac7962,1.28,1.045,0,this.podium);
+    this.medallion=this.group(this.body,0,.22,.24);
+    this.box(.13,.22,.02,0x469ea8,0,.065,0,this.medallion);
+    this.box(.145,.135,.045,0xf1c15d,0,-.047,.014,this.medallion);
+    this.podium.visible=false;
+    this.medallion.visible=false;
+  }
+  setScore(score){
+    this.lastScore=score;
+    for(const {surface,texture,mesh} of this.cards){
+      const ctx=surface.getContext('2d');
+      ctx.fillStyle='#132a3d';ctx.fillRect(0,0,128,96);
+      ctx.strokeStyle='#7dcac1';ctx.lineWidth=5;ctx.strokeRect(3,3,122,90);
+      ctx.fillStyle='#ffdc8b';ctx.font='bold 53px Arial';ctx.textAlign='center';
+      ctx.fillText(score===null?'–':String(score),64,66);
+      texture.needsUpdate=true;
+      mesh.position.y=score===null?1.14:1.45;
+    }
+  }
   resize(){
     const w=this.canvas.clientWidth,h=this.canvas.clientHeight;
     if(!w||!h)return;
     this.camera.aspect=w/h;this.camera.updateProjectionMatrix();
     this.renderer.setSize(w,h,false);
   }
-  draw(cup,height,angle,tuck,celebrate,impact,t,gold){
+  draw(cup,height,angle,tuck,medal,impact,t,gold,intro){
+    const celebrate=medal>0;
+    const walking=intro!==null&&intro>=2.9;
+    const entrance=walking?Math.max(0,1-(intro-2.9)/1.18):0;
+    const stride=Math.sin(t*17)*entrance*.36;
+    this.podium.visible=celebrate;
+    this.medallion.visible=celebrate;
+    this.medallion.children[1].material=this.mat([0xf1c15d,0xb67b62,0xc5dde1,0xf1c15d][medal]);
     this.suit.material=this.mat(gold?0xd7a642:0xe06053);
     this.edge.color.set(cup.color);
     this.scene.background.set(cup.color).multiplyScalar(.26);
-    this.athlete.position.y=2.04+height-impact*.10;
-    this.body.rotation.x=-angle;
+    this.athlete.position.y=2.04+height-impact*.10+(celebrate?.47:0)+Math.abs(stride)*.12;
+    this.athlete.position.z=entrance*1.05;
+    this.body.rotation.x=-angle+(this.lastScore===0?impact*.28:0);
     for(const {arm,elbow,leg,knee,side} of this.limbs){
       arm.rotation.z=side*(celebrate?2.32:.19+tuck*.13);
-      arm.rotation.x=-tuck*.83;
+      arm.rotation.x=-tuck*.83+stride*side;
       elbow.rotation.x=-tuck*.9;
-      leg.rotation.x=-tuck*1.38;
+      leg.rotation.x=-tuck*1.38-stride*side;
       knee.rotation.x=tuck*1.78;
     }
     this.matBed.position.y=.93-impact*.1;
     this.shadow.material.opacity=.26/(1+height*.72);
     this.shadow.scale.setScalar(1+height*.19);
+    this.shadow.position.z=this.athlete.position.z;
     this.landingRing.visible=impact>0;
     this.landingRing.scale.setScalar(1+(1-impact)*1.2);
     this.landingRing.material.opacity=impact*.7;
-    const zoom=1+Math.min(height,3)*.019;
+    if(intro!==null&&intro<1.45){
+      this.camera.position.set(7.9-intro*1.15,5.8,13.5);
+      this.camera.lookAt(0,2.7,-.35);
+    }else if(intro!==null&&intro<2.9){
+      this.camera.position.set(2.9,3.1,2.2);
+      this.camera.lookAt(0,1.32,-3.75);
+    }else if(intro!==null||celebrate){
+      this.camera.position.set(2.8,3.45,7.8);
+      this.camera.lookAt(0,2.37,0);
+    }else{
+      this.camera.position.set(5.8,5.15+height*.14,12.5);
+      this.camera.lookAt(0,3.4+height*.12,0);
+    }
+    const zoom=intro===null&&!celebrate?1+Math.min(height,3)*.019:1;
     if(Math.abs(this.camera.zoom-zoom)>.003){this.camera.zoom=zoom;this.camera.updateProjectionMatrix();}
     this.renderer.render(this.scene,this.camera);
   }
@@ -304,6 +391,7 @@ function clean(value){
 let local;
 try{local=JSON.parse(localStorage.getItem(key));}catch{}
 let state=clean(local), view, support={}, flight=null, holding=false, active=false, mute=false, audio, impact=0, pointer=null;
+let introStarted=null, scoreUntil=0;
 const host=new BeaconHost(window,{
   status(value){support=value;rewardText();},
   reward(key){
@@ -353,7 +441,7 @@ function sync(){
   el('score').textContent=state.results.reduce((a,b)=>a+b,0)+' / 9 pts';
   el('target').textContent=target()===1?'Single somersault':'Double somersault';
   el('line').style.left='83.33%';
-  el('action').disabled=done;
+  el('action').disabled=done||introStarted!==null;
   el('action').textContent=flight?(holding?'Release to extend':'Hold to tuck'):'Jump ↑';
   el('result').hidden=!done;
   el('medal').textContent=['Keep practicing','Bronze medal','Silver medal','Gold medal'][medal]+(state.profile.confetti&&medal?' ✦ 🎉 ✦':'');
@@ -373,13 +461,18 @@ function select(index){
   if(!cups[index]||!state.profile.medals.slice(0,index).every(Boolean))return;
   host.end();active=false;flight=null;holding=false;pointer=null;impact=0;
   state.cup=index;state.results=[];
+  view.setScore(null);
+  openIntro();
   el('feedback').textContent='Ready on the deck';
   sync();save();
 }
 function jump(){
-  if(flight||state.results.length===3)return;
+  if(flight||state.results.length===3||introStarted!==null)return;
   if(!active){active=true;host.start();}
   flight={elapsed:0,angle:0,tuck:0};
+  scoreUntil=0;
+  el('judges').hidden=true;
+  view.setScore(null);
   chime(330);
   el('feedback').textContent='Hold the button to tuck';
   sync();
@@ -392,6 +485,10 @@ function land(){
   const score=points(flight.angle,target());
   flight=null;holding=false;impact=1;
   state.results.push(score);
+  view.setScore(score);
+  el('landing-score').textContent=score+' / 3';
+  el('judges').hidden=false;
+  scoreUntil=performance.now()+1700;
   el('feedback').textContent=['Off balance','Landing saved · +1','Clean landing · +2','Perfect landing · +3'][score];
   chime(score?475+score*87:165);
   if(state.results.length===3){
@@ -403,6 +500,19 @@ function land(){
 try{view=new Arena(document.querySelector('canvas'));}catch{
   el('feedback').textContent='This arena needs a browser with WebGL.';
   el('action').disabled=true;
+}
+function openIntro(){
+  introStarted=performance.now();
+  el('broadcast').hidden=false;
+  el('shot').textContent='Arena overview';
+  el('judges').hidden=true;
+  scoreUntil=0;
+}
+function closeIntro(){
+  introStarted=null;
+  el('broadcast').hidden=true;
+  el('feedback').textContent='Hold to jump and tuck';
+  sync();
 }
 if(view){
   const action=el('action');
@@ -426,16 +536,24 @@ if(view){
   addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
   el('next').onclick=()=>select(state.cup+1);
   el('replay').onclick=()=>select(state.cup);
+  el('skip').onclick=closeIntro;
   el('sound').onclick=()=>{
     mute=!mute;el('sound').textContent=mute?'Sound off':'♪ Sound';
     el('sound').setAttribute('aria-pressed',String(!mute));
   };
   el('feedback').textContent=state.results.length===3?'Routine saved':state.results.length?'Ready for the next jump':'Hold to jump and tuck';
+  if(!state.results.length)openIntro();
   sync();host.poll();
   let last=performance.now();
   function frame(now){
     const dt=Math.min(.04,(now-last)/1000);
     last=now;
+    let intro=introStarted===null?null:(now-introStarted)/1000;
+    if(intro!==null){
+      if(intro>=4.4){closeIntro();intro=null;}
+      else el('shot').textContent=intro<1.45?'Arena overview':intro<2.9?'Official judges':'Athlete ready';
+    }
+    if(scoreUntil&&now>=scoreUntil){scoreUntil=0;el('judges').hidden=true;}
     if(flight&&!document.hidden){
       flight.elapsed+=dt;
       if(holding)flight.angle+=speed*dt;
@@ -447,7 +565,7 @@ if(view){
     el('turns').textContent=(ratio*target()).toFixed(2)+' / '+target()+' turns';
     impact=Math.max(0,impact-dt*4);
     const height=flight?Math.sin(Math.PI*flight.elapsed/cup().time)*cup().height:0;
-    view.draw(cup(),height,flight?.angle??0,flight?.tuck??0,!!stars(state.results),impact,now/1000,state.profile.gold);
+    view.draw(cup(),height,flight?.angle??0,flight?.tuck??0,stars(state.results),impact,now/1000,state.profile.gold,intro);
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
