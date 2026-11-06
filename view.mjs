@@ -19,6 +19,7 @@ export class Arena {
     key.position.set(-5,10,5);this.scene.add(key);
     const edge=new T.DirectionalLight(0x84c5ff,.7);
     edge.position.set(4,5,-8);this.scene.add(edge);
+    this.edge=edge;
     this.geometry=new T.BoxGeometry();
     this.materials=new Map();
     this.makeVenue();
@@ -50,6 +51,10 @@ export class Arena {
   makeVenue(){
     this.box(37,.25,31,0xa2b3bf,0,-.14,0);
     this.box(15,.08,13,0x416b80,0,0,0);
+    for(const x of [-5.9,5.9]){
+      this.box(.44,.012,12,0xc55c58,x,.049,0);
+      this.box(.055,.013,12,0xf2cf93,x+.29,.05,0);
+    }
     this.box(7.4,.10,7.2,0x254b62,0,.06,0);
     for(let i=-3;i<=3;i++){
       this.box(.025,.006,7.1,0x508395,i,.117,0);
@@ -65,10 +70,18 @@ export class Arena {
     this.matBed=this.box(3.88,.075,2.58,0xd8e0cd,0,.93,0);
     for(const z of [-1.53,1.53])this.box(4.83,.20,.42,0x45b9b9,0,.94,z);
     for(const x of [-2.18,2.18])this.box(.43,.20,2.65,0x45b9b9,x,.94,0);
+    for(const z of [-1.75,1.75]){
+      this.box(4.76,.044,.035,0x92e8dd,0,1.023,z);
+      for(const x of [-1.9,-.95,.95,1.9])this.box(.046,.19,.038,0x266575,x,.94,z);
+    }
     for(let i=-9;i<=9;i++)this.box(.012,.007,2.53,0xb1bdac,i*.2,.974,0);
     for(let i=-6;i<=6;i++)this.box(3.81,.007,.012,0xb1bdac,0,.976,i*.2);
     this.box(1.15,.012,.034,0xd16051,0,.982,0);
     this.box(.034,.012,.91,0xd16051,0,.983,0);
+    for(const x of [-1.5,1.5])for(const z of [-.99,.99]){
+      this.box(.34,.009,.047,0xe2a758,x,.986,z);
+      this.box(.047,.009,.28,0xe2a758,x,.987,z);
+    }
     for(const z of [-1.31,1.31])for(let i=-8;i<=8;i++)this.box(.024,.05,.15,0x86a3a7,i*.23,.88,z);
     for(let row=0;row<6;row++){
       const z=-5.7-row*.64,y=.3+row*.45;
@@ -90,6 +103,12 @@ export class Arena {
     this.scene.add(crowd);
     this.box(28,10,.28,0x37566c,0,5,-10);
     this.label('WORLD TRAMPOLINE SERIES',9.2,1.05,-4.4,4.6,-9.79);
+    this.box(25,.075,.12,0x73c6c5,0,5.36,-9.74);
+    this.box(25,.06,.12,0x527c92,0,4.02,-9.74);
+    for(const x of [-10.8,-7.7,-1.1,2.0,5.1,8.2,11.3]){
+      this.box(.11,2.1,.12,0x496c84,x,6.45,-9.73);
+      this.box(.30,.055,.13,0xa2d8d5,x,7.29,-9.69);
+    }
     this.box(25,.26,.55,0x192e45,-1,7.6,-7.7);
     for(let i=-10;i<=9;i++){
       this.box(.64,.07,.24,0xc5efed,i*1.15,7.44,-7.64);
@@ -113,6 +132,10 @@ export class Arena {
     }
     this.shadow=new T.Mesh(new T.CircleGeometry(.68,28),new T.MeshBasicMaterial({color:0x172735,transparent:true,opacity:.24,depthWrite:false}));
     this.shadow.rotation.x=-Math.PI/2;this.shadow.position.y=.987;this.scene.add(this.shadow);
+    this.landingRing=new T.Mesh(new T.RingGeometry(.67,.71,40),new T.MeshBasicMaterial({color:0x7df7d7,transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide}));
+    this.landingRing.rotation.x=-Math.PI/2;
+    this.landingRing.position.y=.996;
+    this.scene.add(this.landingRing);
   }
   makeAthlete(){
     const skin=0xdca885, red=0xe06053, ink=0x274157, white=0xf5e9cf;
@@ -123,9 +146,16 @@ export class Arena {
     this.box(.62,.105,.39,white,0,.18,0,this.body);
     this.box(.64,.16,.40,ink,0,-.18,0,this.body);
     this.box(.23,.055,.035,0xffd57a,0,.34,.197,this.body);
+    this.box(.28,.23,.026,0xf3e0b9,0,.035,.198,this.body);
+    this.box(.049,.125,.017,ink,-.025,.038,.218,this.body);
+    this.box(.086,.031,.017,ink,-.04,.091,.219,this.body);
+    for(const x of [-.298,.298])this.box(.025,.42,.11,0x9a3a42,x,.22,.08,this.body);
     this.box(.43,.43,.39,skin,0,.75,0,this.body);
     this.box(.46,.14,.42,0x43383d,0,.94,-.015,this.body);
     this.box(.15,.23,.09,0x43383d,-.16,.83,-.16,this.body);
+    this.box(.39,.05,.05,0x594048,0,.895,.202,this.body);
+    this.box(.095,.13,.05,0x594048,-.146,.848,.202,this.body);
+    for(const x of [-.222,.222])this.box(.041,.095,.09,0xc78e72,x,.72,.018,this.body);
     for(const x of [-.105,.105])this.box(.065,.062,.022,0x293e4b,x,.77,.205,this.body);
     this.box(.115,.024,.02,0x9b594f,0,.665,.207,this.body);
     this.limbs=[-1,1].map(side=>{
@@ -139,6 +169,8 @@ export class Arena {
       const knee=this.group(leg,0,-.38,0);
       this.box(.20,.35,.22,skin,0,-.15,0,knee);
       this.box(.24,.13,.36,white,0,-.36,.045,knee);
+      this.box(.244,.036,.368,0x415a71,0,-.405,.046,knee);
+      this.box(.20,.052,.232,0xffedcf,0,-.266,.006,knee);
       return {arm,elbow,leg,knee,side};
     });
   }
@@ -150,6 +182,7 @@ export class Arena {
   }
   draw(cup,height,angle,tuck,celebrate,impact,t,gold){
     this.suit.material=this.mat(gold?0xd7a642:0xe06053);
+    this.edge.color.set(cup.color);
     this.scene.background.set(cup.color).multiplyScalar(.26);
     this.athlete.position.y=2.04+height-impact*.10;
     this.body.rotation.x=-angle;
@@ -163,6 +196,9 @@ export class Arena {
     this.matBed.position.y=.93-impact*.1;
     this.shadow.material.opacity=.26/(1+height*.72);
     this.shadow.scale.setScalar(1+height*.19);
+    this.landingRing.visible=impact>0;
+    this.landingRing.scale.setScalar(1+(1-impact)*1.2);
+    this.landingRing.material.opacity=impact*.7;
     const zoom=1+Math.min(height,3)*.019;
     if(Math.abs(this.camera.zoom-zoom)>.003){this.camera.zoom=zoom;this.camera.updateProjectionMatrix();}
     this.renderer.render(this.scene,this.camera);
