@@ -50,19 +50,57 @@ export class Arena {
     m.position.set(x,y,z);this.scene.add(m);
   }
   makeVenue(){
-    this.box(37,.25,31,0xa2b3bf,0,-.14,0);
-    this.box(15,.08,13,0x416b80,0,0,0);
-    for(const x of [-5.9,5.9]){
-      this.box(.44,.012,12,0xc55c58,x,.049,0);
-      this.box(.055,.013,12,0xf2cf93,x+.29,.05,0);
+    // The competition deck sits over a river, between terraced sandstone walls.
+    this.scene.fog=new T.FogExp2(0xddb293,.023);
+    this.box(12,.55,11,0x643f36,0,-.29,1);
+    for(let i=0;i<29;i++){
+      const z=(i-14)*.35+1;
+      this.box(11.85,.055,.334,i%3===0?0xc88758:0xab6948,0,.016,z);
     }
-    this.box(7.4,.10,7.2,0x254b62,0,.06,0);
-    for(let i=-3;i<=3;i++){
-      this.box(.025,.006,7.1,0x508395,i,.117,0);
-      this.box(7.3,.006,.025,0x508395,0,.117,i);
+    for(const x of [-5.75,5.75]){
+      this.box(.11,.09,10.7,0xf2b568,x,.07,1);
+      for(let i=0;i<8;i++){
+        const z=i*1.43-4;
+        this.box(.14,.85,.14,0x523c36,x,.43,z);
+      }
+      this.box(.09,.09,10.1,0x734a36,x,.8,1);
+      this.box(.09,.06,10.1,0x956448,x,.45,1);
     }
-    for(const x of [-3.57,3.57])this.box(.055,.012,7.15,0x8ed3d0,x,.13,0);
-    for(const z of [-3.52,3.52])this.box(7.2,.012,.055,0x8ed3d0,0,.13,z);
+    this.box(16,.13,73,0x277c86,0,-2.35,-15);
+    this.ripples=this.group(this.scene,0,-2.26,0);
+    for(let i=0;i<60;i++){
+      this.box(.3+(i%7)*.27,.016,.06,i%4?0x4e9c9e:0xa3cac0,
+        Math.sin(i*43)*7.5,0,-(i%30)*1.4+6,this.ripples);
+    }
+    for(const side of [-1,1]){
+      for(let i=0;i<11;i++){
+        const z=3-i*3.9, x=side*(12+Math.sin(i*2.6)*2.1);
+        const height=3+Math.abs(Math.sin(i*4.1))*7+i*.24;
+        for(let tier=0;tier<4;tier++){
+          const width=9-tier*1.36, depth=5.1-tier*.68;
+          this.box(width,height/4,depth,[0x81483e,0xa55942,0xb5674a,0xce895c][tier],
+            x+side*tier*.55,-2.5+height*(tier+.5)/4,z-tier*.32);
+          this.box(width+.05,.09,depth+.03,0xe5a575,
+            x+side*tier*.55,-2.5+height*(tier+1)/4,z-tier*.32);
+        }
+      }
+    }
+    // A cable footbridge frames the far end of the gorge.
+    for(const x of [-7.5,7.5]){
+      this.box(.35,5,.39,0x754c3b,x,3.6,-14.5);
+      this.box(.63,.23,.63,0xf0ac66,x,6.17,-14.5);
+    }
+    for(let i=0;i<=36;i++){
+      const x=(i-18)*.42, sag=(x/7.56)**2;
+      this.box(.41,.13,1.5,0xbe7d4e,x,1.9+sag*.9,-14.5);
+      for(const z of [-15.2,-13.8]){
+        const cable=this.box(.46,.058,.058,0xf4c083,x,3.85+sag*2.1,z);
+        cable.rotation.z=Math.atan(4.2*x/(7.56**2));
+        if(i%3===0)this.box(.045,1.97+sag*1.2,.045,0xb97e54,x,2.87+sag*1.5,z);
+      }
+    }
+    this.sun=new T.Mesh(new T.SphereGeometry(2,24,16),new T.MeshBasicMaterial({color:0xffe4ad,fog:false}));
+    this.sun.position.set(-9,10,-35);this.scene.add(this.sun);
     for(const x of [-2.13,2.13])for(const z of [-1.48,1.48]){
       this.box(.19,.67,.19,0x405c6e,x,.4,z);
       this.box(.39,.11,.35,0x22394b,x,.16,z);
@@ -84,52 +122,12 @@ export class Arena {
       this.box(.047,.009,.28,0xe2a758,x,.987,z);
     }
     for(const z of [-1.31,1.31])for(let i=-8;i<=8;i++)this.box(.024,.05,.15,0x86a3a7,i*.23,.88,z);
-    for(let row=0;row<6;row++){
-      const z=-5.7-row*.64,y=.3+row*.45;
-      this.box(25,.52,.69,row%2?0x3c6179:0x32546e,0,y,z);
-      this.box(25,.04,.07,0x7894a6,0,y+.27,z+.31);
-    }
-    const crowd=new T.InstancedMesh(this.geometry,this.mat(0xffffff),6*32*3);
-    const proxy=new T.Object3D();
-    const shirts=[0x4f9baf,0x70bfc2,0xe4ab63,0xcc746c,0x7477aa,0x80a882];
-    const skins=[0xe4b78e,0x98664f,0xc48b67,0x795640,0xf0c49a];
-    let n=0;
-    for(let row=0;row<6;row++)for(let col=0;col<32;col++){
-      const x=(col-15.5)*.68,y=.58+row*.45,z=-5.7-row*.64;
-      for(const [w,h,d,dy,color] of [[.37,.38,.29,.22,shirts[(col*5+row*7)%6]],[.27,.25,.25,.53,skins[(col+row*2)%5]],[.28,.067,.27,.68,0x333746]]){
-        proxy.position.set(x,y+dy,z);proxy.scale.set(w,h,d);proxy.updateMatrix();
-        crowd.setMatrixAt(n,proxy.matrix);crowd.setColorAt(n++,new T.Color(color));
-      }
-    }
-    this.scene.add(crowd);
-    this.box(28,10,.28,0x37566c,0,5,-10);
-    this.label('WORLD TRAMPOLINE SERIES',9.2,1.05,-4.4,4.6,-9.79);
-    this.box(25,.075,.12,0x73c6c5,0,5.36,-9.74);
-    this.box(25,.06,.12,0x527c92,0,4.02,-9.74);
-    for(const x of [-10.8,-7.7,-1.1,2.0,5.1,8.2,11.3]){
-      this.box(.11,2.1,.12,0x496c84,x,6.45,-9.73);
-      this.box(.30,.055,.13,0xa2d8d5,x,7.29,-9.69);
-    }
-    this.box(25,.26,.55,0x192e45,-1,7.6,-7.7);
-    for(let i=-10;i<=9;i++){
-      this.box(.64,.07,.24,0xc5efed,i*1.15,7.44,-7.64);
-      const pennant=this.box(.32,.43,.035,[0x3e9caa,0xd99750,0xc35f59][(i+12)%3],i*.66,3.48,-5.35);
-      pennant.rotation.z=i%2?.11:-.11;
-    }
-    this.box(14,.035,.035,0xb7c2aa,-.25,3.72,-5.35);
-    for(const x of [-8.9,8.9]) {
-      this.box(.33,8.5,.32,0x314d65,x,4.3,-8.9);
-      this.box(2.2,.28,.47,0x182e46,x,6.75,-8.75);
-      for(let j=0;j<5;j++)this.box(.31,.16,.08,0xd4f4ed,x-.82+j*.41,6.75,-8.48);
-    }
-    this.label('01   •   FLIGHT DECK',3.8,.56,0,.48,1.77);
-    for(const x of [-4.1,4.1]){
-      this.box(.75,.22,1.5,0x426984,x,.15,-.7);
-      this.box(.66,.16,1.42,0x83aab7,x,.34,-.7);
-      this.box(.44,.48,.37,0xf0dcb4,x,.59,-.8);
-      this.box(.31,.31,.31,0xc58e6e,x,1.00,-.77);
-      this.box(.33,.08,.34,0x304353,x,1.18,-.77);
-      this.box(.53,.057,.67,0x203f58,x,.83,-.34);
+    this.label('REDROCK GORGE',3.8,.56,0,.48,1.77);
+    for(const x of [-4.35,4.35]){
+      this.box(.15,3.5,.15,0x754936,x,1.75,-2.2);
+      this.box(.70,.13,.15,0x754936,x+.28,3.48,-2.2);
+      this.box(.51,.76,.035,x<0?0xe4774e:0xe8b65e,x+.29,3.03,-2.2);
+      this.box(.39,.085,.05,0xffdeb0,x+.29,3.16,-2.17);
     }
     this.shadow=new T.Mesh(new T.CircleGeometry(.68,28),new T.MeshBasicMaterial({color:0x172735,transparent:true,opacity:.24,depthWrite:false}));
     this.shadow.rotation.x=-Math.PI/2;this.shadow.position.y=.987;this.scene.add(this.shadow);
@@ -283,7 +281,13 @@ export class Arena {
     this.medallion.children[1].material=this.mat([0xf1c15d,0xb67b62,0xc5dde1,0xf1c15d][medal]);
     this.suit.material=this.mat(gold?0xd7a642:0xe06053);
     this.edge.color.set(cup.color);
-    this.scene.background.set(cup.color).multiplyScalar(.26);
+    const evening=cup.color===0xa6a3ff;
+    const sunset=cup.color===0xffbb70;
+    this.scene.background.setHex(evening?0x766284:sunset?0xf1aa79:0x9fcad5);
+    this.scene.fog.color.setHex(evening?0x98728a:sunset?0xe8ae86:0xb5cdd1);
+    this.sun.material.color.setHex(evening?0xdedcf9:0xffe4ad);
+    this.sun.position.y=sunset?6.8:10;
+    this.ripples.position.z=Math.sin(t*.7)*.38;
     this.athlete.position.y=2.04+height-impact*.10+(celebrate?.47:0)+Math.abs(stride)*.12;
     this.athlete.position.z=entrance*1.05;
     this.body.rotation.x=-angle+(this.lastScore===0?impact*.28:0);
@@ -302,7 +306,7 @@ export class Arena {
     this.landingRing.scale.setScalar(1+(1-impact)*1.2);
     this.landingRing.material.opacity=impact*.7;
     if(intro!==null&&intro<1.45){
-      this.camera.position.set(7.9-intro*1.15,5.8,13.5);
+      this.camera.position.set(4.7-intro*2.2,7.6-intro*1.5,14.4);
       this.camera.lookAt(0,2.7,-.35);
     }else if(intro!==null&&intro<2.9){
       this.camera.position.set(2.9,3.1,2.2);
@@ -311,7 +315,7 @@ export class Arena {
       this.camera.position.set(2.8,3.45,7.8);
       this.camera.lookAt(0,2.37,0);
     }else{
-      this.camera.position.set(5.8,5.15+height*.14,12.5);
+      this.camera.position.set(2.8,4.4+height*.14,12.8);
       this.camera.lookAt(0,3.4+height*.12,0);
     }
     const zoom=intro===null&&!celebrate?1+Math.min(height,3)*.019:1;
