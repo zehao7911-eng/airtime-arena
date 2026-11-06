@@ -144,34 +144,65 @@ export class Arena {
     this.athlete.rotation.y=.25;
     this.body=this.group(this.athlete,0,0,0);
     this.suit=this.box(.60,.65,.37,red,0,.19,0,this.body);
+    this.box(.48,.12,.38,0xb74843,0,.446,0,this.body);
+    this.box(.29,.062,.038,0x23394e,0,.493,.19,this.body);
+    this.box(.25,.075,.21,skin,0,.536,0,this.body);
     this.box(.62,.105,.39,white,0,.18,0,this.body);
     this.box(.64,.16,.40,ink,0,-.18,0,this.body);
     this.box(.23,.055,.035,0xffd57a,0,.34,.197,this.body);
     this.box(.28,.23,.026,0xf3e0b9,0,.035,.198,this.body);
     this.box(.049,.125,.017,ink,-.025,.038,.218,this.body);
     this.box(.086,.031,.017,ink,-.04,.091,.219,this.body);
-    for(const x of [-.298,.298])this.box(.025,.42,.11,0x9a3a42,x,.22,.08,this.body);
+    for(const side of [-1,1]){
+      this.box(.026,.42,.11,0x9a3a42,side*.298,.22,.08,this.body);
+      this.box(.06,.17,.024,0xffaa76,side*.246,.366,.199,this.body);
+      this.box(.042,.12,.025,0xffcc92,side*.204,.395,.199,this.body);
+      this.box(.12,.049,.027,0xeeb96d,side*.225,-.098,.201,this.body);
+    }
     this.box(.43,.43,.39,skin,0,.75,0,this.body);
     this.box(.46,.14,.42,0x43383d,0,.94,-.015,this.body);
     this.box(.15,.23,.09,0x43383d,-.16,.83,-.16,this.body);
     this.box(.39,.05,.05,0x594048,0,.895,.202,this.body);
     this.box(.095,.13,.05,0x594048,-.146,.848,.202,this.body);
-    for(const x of [-.222,.222])this.box(.041,.095,.09,0xc78e72,x,.72,.018,this.body);
-    for(const x of [-.105,.105])this.box(.065,.062,.022,0x293e4b,x,.77,.205,this.body);
-    this.box(.115,.024,.02,0x9b594f,0,.665,.207,this.body);
+    this.box(.31,.075,.34,0x4a3539,-.052,1.022,-.035,this.body);
+    this.box(.19,.045,.29,0x5d4140,-.084,1.079,-.051,this.body);
+    this.box(.124,.044,.18,0x765148,-.081,1.089,.002,this.body);
+    this.box(.109,.082,.072,0x49373b,.132,.904,.192,this.body);
+    this.box(.058,.062,.064,0x5d4140,.167,.857,.188,this.body);
+    for(const side of [-1,1]){
+      this.box(.043,.101,.10,0xc78e72,side*.222,.724,.019,this.body);
+      this.box(.014,.047,.042,0xe8b691,side*.248,.727,.038,this.body);
+      this.box(.092,.029,.014,0x59403a,side*.104,.813,.201,this.body);
+      this.box(.089,.056,.018,0xf3dfc6,side*.104,.766,.205,this.body);
+      this.box(.038,.055,.019,0x293e4b,side*.098,.766,.217,this.body);
+      this.box(.013,.014,.013,0xfff4d6,side*.098-.007,.777,.229,this.body);
+      this.box(.068,.024,.014,0xc4836d,side*.139,.704,.201,this.body);
+    }
+    this.box(.059,.059,.034,0xe7b08c,0,.721,.203,this.body);
+    this.box(.104,.027,.022,0x914d46,0,.665,.208,this.body);
+    this.box(.071,.010,.014,0xf4d6b5,0,.672,.222,this.body);
     this.limbs=[-1,1].map(side=>{
       const arm=this.group(this.body,side*.405,.42,0);
       this.box(.19,.36,.21,skin,0,-.17,0,arm);
+      this.box(.218,.124,.234,red,0,-.056,0,arm);
+      this.box(.222,.028,.237,white,0,-.114,0,arm);
       const elbow=this.group(arm,0,-.34,0);
       this.box(.16,.33,.19,skin,0,-.14,0,elbow);
       this.box(.17,.077,.2,white,0,-.22,0,elbow);
+      this.box(.175,.022,.204,0x53a8af,0,-.233,0,elbow);
+      this.box(.143,.102,.167,skin,0,-.302,0,elbow);
+      this.box(.056,.067,.075,0xc88d74,-side*.074,-.286,.046,elbow);
       const leg=this.group(this.body,side*.15,-.22,0);
       this.box(.235,.40,.25,ink,0,-.18,0,leg);
+      this.box(.027,.33,.056,0x60b6b3,side*.119,-.18,.078,leg);
+      this.box(.239,.035,.254,0x415d70,0,-.353,0,leg);
       const knee=this.group(leg,0,-.38,0);
       this.box(.20,.35,.22,skin,0,-.15,0,knee);
       this.box(.24,.13,.36,white,0,-.36,.045,knee);
       this.box(.244,.036,.368,0x415a71,0,-.405,.046,knee);
       this.box(.20,.052,.232,0xffedcf,0,-.266,.006,knee);
+      this.box(.19,.045,.041,0xe8cdb1,0,-.353,.221,knee);
+      for(const z of [.089,.127,.165])this.box(.134,.017,.018,0x557a85,0,-.290,z,knee);
       return {arm,elbow,leg,knee,side};
     });
   }
@@ -190,6 +221,14 @@ export class Arena {
       this.box(.14,.19,.025,0xe6e3cb,x,1.27,z);
       this.box(.053,.15,.031,0x5fc2c3,x,1.27,z+.02);
       for(const dx of [-.08,.08])this.box(.045,.043,.024,0x28333d,x+dx,1.63,z+.004);
+      for(const dx of [-.082,.082]){
+        this.box(.068,.019,.018,0x634842,x+dx,1.673,z+.008);
+        this.box(.025,.12,.025,0x34526b,x+dx,1.315,z+.005);
+      }
+      this.box(.071,.018,.018,0x965a50,x,1.55,z+.008);
+      this.box(.091,.039,.020,0xe9bd72,x+.146,1.304,z+.007);
+      this.box(.26,.018,.17,0xf2e3bf,x+.36,1.132,z+.285);
+      this.box(.116,.012,.02,0x385664,x+.34,1.146,z+.296);
       this.box(.24,.06,.17,0x67818c,x-.36,1.135,z+.47);
       const mic=this.box(.032,.23,.032,0x253d4f,x-.36,1.27,z+.46);
       mic.rotation.x=-.29;
