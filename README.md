@@ -10,4 +10,5 @@ GameWave lifecycle events follow actual routines. A confirmed like can unlock a 
 
 ## Music
 
-[Sneaky Snitch](https://www.incompetech.com/music/royalty-free/index.html?isrc=USUAN1100772) by Kevin MacLeod, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Original recording looped at reduced volume.
+[Fluffing a Duck](https://www.incompetech.com/music/royalty-free/index.html?isrc=USUAN1100768) by Kevin MacLeod, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Original recording looped at reduced volume.
+
