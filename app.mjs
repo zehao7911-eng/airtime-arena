@@ -48,7 +48,7 @@ function save(){
   host.save(state);
 }
 const soundtrack = el('soundtrack');
-soundtrack.volume = 0.45;
+soundtrack.volume = 0.72;
 let musicStarted = false;
 function syncSoundtrack() {
   if (musicStarted && !mute && !document.hidden && state.results.length < 3) {
@@ -78,8 +78,9 @@ function sync(){
   el('target').textContent=target()===1?'Single somersault':'Double somersault';
   el('line').style.left='83.33%';
   el('action').disabled=done||introStarted!==null;
-  el('action').textContent=flight?(holding?'Release to extend':'Hold to tuck'):'Jump ↑';
+  el('action').textContent=flight?(holding?'Release':'Tuck'):'Jump ↑';
   el('result').hidden=!done;
+  el('arena-menu').hidden=!done;
   el('medal').textContent=['Keep practicing','Bronze medal','Silver medal','Gold medal'][medal]+(state.profile.confetti&&medal?' ✦ 🎉 ✦':'');
   el('summary').textContent=state.results.join(' + ')+' points across three landings';
   el('next').hidden=!medal||state.cup===cups.length-1;
@@ -177,9 +178,12 @@ if(view){
   addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
   el('next').onclick=()=>select(state.cup+1);
   el('replay').onclick=()=>select(state.cup);
-  el('skip').onclick=closeIntro;
+  el('skip').onclick=()=>{closeIntro();musicStarted=true;syncSoundtrack();};
   el('sound').onclick=()=>{
-    mute=!mute;el('sound').textContent=mute?'Sound off':'♪ Sound';
+    mute=!mute;
+    if(!mute)musicStarted=true;
+    el('sound').textContent=mute?'×':'♪';
+    el('sound').setAttribute('aria-label',mute?'Enable sound':'Mute sound');
     el('sound').setAttribute('aria-pressed',String(!mute));
     syncSoundtrack();
   };
