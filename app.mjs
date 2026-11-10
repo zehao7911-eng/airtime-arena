@@ -47,6 +47,16 @@ function save(){
   try{localStorage.setItem(key,JSON.stringify(state));}catch{}
   host.save(state);
 }
+const soundtrack = el('soundtrack');
+soundtrack.volume = 0.45;
+let musicStarted = false;
+function syncSoundtrack() {
+  if (musicStarted && !mute && !document.hidden && state.results.length < 3) {
+    if (soundtrack.paused) soundtrack.play().catch(() => {});
+  } else {
+    soundtrack.pause();
+  }
+}
 function chime(f){
   if(mute)return;
   try{
@@ -88,6 +98,8 @@ function select(index){
   host.end();active=false;flight=null;holding=false;pointer=null;impact=0;
   state.cup=index;state.results=[];
   view.setScore(null);
+  musicStarted = false;
+  syncSoundtrack();
   openIntro();
   el('feedback').textContent='Ready on the deck';
   sync();save();
@@ -95,6 +107,8 @@ function select(index){
 function jump(){
   if(flight||state.results.length===3||introStarted!==null)return;
   if(!active){active=true;host.start();}
+  musicStarted = true;
+  syncSoundtrack();
   flight={elapsed:0,angle:0,tuck:0};
   scoreUntil=0;
   el('judges').hidden=true;
@@ -120,6 +134,7 @@ function land(){
   if(state.results.length===3){
     state.profile.medals[state.cup]=Math.max(state.profile.medals[state.cup],stars(state.results));
     active=false;host.end();
+    syncSoundtrack();
   }
   sync();save();
 }
@@ -157,8 +172,8 @@ if(view){
   });
   addEventListener('keyup',e=>{if(e.code==='Space')release();});
   addEventListener('blur',release);
-  document.addEventListener('visibilitychange',()=>{if(document.hidden){release();save();}});
-  addEventListener('pagehide',()=>{save();host.stop();});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden){release();save();}syncSoundtrack();});
+  addEventListener('pagehide',()=>{soundtrack.pause();save();host.stop();});
   addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
   el('next').onclick=()=>select(state.cup+1);
   el('replay').onclick=()=>select(state.cup);
@@ -166,6 +181,7 @@ if(view){
   el('sound').onclick=()=>{
     mute=!mute;el('sound').textContent=mute?'Sound off':'♪ Sound';
     el('sound').setAttribute('aria-pressed',String(!mute));
+    syncSoundtrack();
   };
   el('feedback').textContent=state.results.length===3?'Routine saved':state.results.length?'Ready for the next jump':'Hold to jump and tuck';
   if(!state.results.length)openIntro();

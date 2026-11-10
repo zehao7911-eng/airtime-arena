@@ -31,3 +31,5 @@ nav{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}nav 
 #result{position:static;transform:none;width:100%;margin-top:9px;padding:11px}
 main:has(#result:not([hidden])) .controls{display:none}
 #result p{margin:4px 0 8px}
+
+.music-credit{text-align:center;font-size:10px;color:#b5c2d5;margin:5px 0}.music-credit a{color:inherit}
