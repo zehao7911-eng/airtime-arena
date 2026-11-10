@@ -32,6 +32,6 @@ nav{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}nav 
 main:has(#result:not([hidden])) .controls{display:none}
 #result p{margin:4px 0 8px}
 
-.music-credit{text-align:center;font-size:10px;color:#b5c2d5;margin:5px 0}.music-credit a{color:inherit}
+
 
 header small:empty,#result>small:empty{display:none}#sound{min-width:44px;min-height:44px;font-size:20px}#arena-menu{margin-top:7px}#arena-menu summary{cursor:pointer}main:has(#result:not([hidden])) #hint{display:none}
